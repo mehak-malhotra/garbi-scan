@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {
+            font-family: 'Lora', serif;
+            background-color: #F5F1E3;
+            color: #4A3F35;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            width: 90%;
+            margin: auto;
+            height: 80vh;
+        }
+        .box {
+            background-color: #E3DAC9;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #4A3F35;
+        }
+        .map {
+            background-color: #77815C;
+        }
+        .graph {
+            background-color: #8B5E3B;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="box map" id="map-container" style="width: 100%; height: 300px; cursor: pointer;" onclick="window.location.href='/map'">
+            <div id="mini-map" style="width: 100%; height: 100%;"></div>
+        </div>
+        <div class="box graph" id="graph1"></div>
+        <div class="box graph" id="graph2"></div>
+        <div class="box graph" id="graph3"></div>
+    </div>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('/get_graphs')
+                .then(response => response.json())
+                .then(data => {
+                    Plotly.newPlot('graph1', JSON.parse(data.graph1).data, JSON.parse(data.graph1).layout);
+                    Plotly.newPlot('graph2', JSON.parse(data.graph2).data, JSON.parse(data.graph2).layout);
+                    Plotly.newPlot('graph3', JSON.parse(data.graph3).data, JSON.parse(data.graph3).layout);
+                })
+                .catch(error => console.error("Error fetching graphs:", error));
+        });
+
+        var miniMap = L.map("mini-map", {
+        center: [30.516, 76.66],
+        zoom: 14,
+        zoomControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        touchZoom: false
+    });
+
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        minZoom: 0,
+        maxZoom: 19,
+        attribution: "&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
+    }).addTo(miniMap);
+
+    fetch('/location_data')
+        .then(response => response.json())
+        .then(locations => {
+            locations.forEach(loc => {
+                L.marker([loc.lat, loc.lon]).addTo(miniMap);
+            });
+        })
+        .catch(error => console.error("Error fetching locations:", error));
+    </script>
+        
+</body>
+</html>
+
+{% endblock %}

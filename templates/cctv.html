@@ -1,0 +1,269 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live CCTV Stream</title>
+    <style>
+        #video-container {
+            position: relative;
+            display: inline-block;
+        }
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live CCTV Stream for {{ location_name }}</h1>
+
+    <div id="video-container">
+        <img id="video-stream" src="{{ url_for('video_feed', lat=lat, lon=lon) }}" width="640" height="480">
+        <canvas id="overlay"></canvas>
+    </div>
+
+    <button onclick="sendSelectedArea()">Select Area</button>
+
+    ✅ Add Garbage Threshold Input 
+    <h3>Set Garbage Threshold</h3>
+    <input type="number" id="threshold" placeholder="Enter threshold %" min="1" max="100">
+    <button onclick="saveThreshold()">Save Threshold</button>
+
+    <script>
+        let canvas = document.getElementById("overlay");
+        let ctx = canvas.getContext("2d");
+        let img = document.getElementById("video-stream");
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        let startX, startY, endX, endY, isDrawing = false;
+
+        canvas.addEventListener("mousedown", (e) => {
+            startX = e.offsetX;
+            startY = e.offsetY;
+            isDrawing = true;
+        });
+
+        canvas.addEventListener("mousemove", (e) => {
+            if (!isDrawing) return;
+            endX = e.offsetX;
+            endY = e.offsetY;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(startX, startY, endX - startX, endY - startY);
+        });
+
+        canvas.addEventListener("mouseup", () => {
+            isDrawing = false;
+        });
+
+        function sendSelectedArea() {
+            let data = {
+                lat: "{{ lat }}",
+                lon: "{{ lon }}",
+                x1: startX,
+                y1: startY,
+                x2: endX,
+                y2: endY
+            };
+
+            fetch("/save_selected_area", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => alert(data.message))
+            .catch(error => console.error("Error:", error));
+        }
+
+        // ✅ Function to save the threshold
+        function saveThreshold() {
+            let threshold = document.getElementById("threshold").value;
+            if (!threshold || threshold < 1 || threshold > 100) {
+                alert("Please enter a valid threshold (1-100)");
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("location", "{{ location_name }}");
+            formData.append("lat", "{{ lat }}");
+            formData.append("lon", "{{ lon }}");
+            formData.append("threshold", threshold);
+
+            fetch("/save_threshold", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => alert("Threshold saved successfully!"))
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html> -->
+
+{% extends "base.html" %}
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live CCTV Stream</title>
+    <style>
+        body {
+            font-family: 'Lora', serif;
+            background-color: #F5F1E3;
+            color: #4A3F35;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #77815C;
+        }
+        #navbar {
+            width: 100%;
+            background-color: #8B5E3B;
+            padding: 15px 0;
+            text-align: center;
+        }
+        #navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            font-size: 18px;
+        }
+        #video-container {
+            position: relative;
+            display: inline-block;
+            border: 5px solid #77815C;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(119, 129, 92, 0.2);
+        }
+        button {
+            background: linear-gradient(135deg, #77815C, #8B5E3B);
+            color: #fff;
+            border: none;
+            padding: 12px 25px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 15px auto;
+            display: block;
+            transition: 0.3s;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            background-color: #8B5E3B;
+            transform: scale(1.05);
+        }
+        input[type="number"] {
+            width: 250px;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #77815C;
+            border-radius: 5px;
+            text-align: center;
+            background-color: #F5F1E3;
+            color: #4A3F35;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live CCTV Stream for {{ location_name }}</h1>
+    <div id="video-container">
+        <img id="video-stream" src="{{ url_for('video_feed', lat=lat, lon=lon) }}" width="640" height="480">
+        <canvas id="overlay"></canvas>
+    </div>
+    
+    <h3>Set Garbage Threshold</h3>
+    <input type="number" id="threshold" placeholder="Enter threshold %" min="1" max="100">
+    <button onclick="saveThreshold()">Save Threshold</button>
+    <button onclick="sendSelectedArea()">Select Area</button>
+    
+    <script>
+        let canvas = document.getElementById("overlay");
+        let ctx = canvas.getContext("2d");
+        let img = document.getElementById("video-stream");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        let startX, startY, endX, endY, isDrawing = false;
+        canvas.addEventListener("mousedown", (e) => {
+            startX = e.offsetX;
+            startY = e.offsetY;
+            isDrawing = true;
+        });
+        canvas.addEventListener("mousemove", (e) => {
+            if (!isDrawing) return;
+            endX = e.offsetX;
+            endY = e.offsetY;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(startX, startY, endX - startX, endY - startY);
+        });
+        canvas.addEventListener("mouseup", () => {
+            isDrawing = false;
+        });
+        function sendSelectedArea() {
+            let data = {
+                lat: "{{ lat }}",
+                lon: "{{ lon }}",
+                x1: startX,
+                y1: startY,
+                x2: endX,
+                y2: endY
+            };
+            fetch("/save_selected_area", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => alert(data.message))
+            .catch(error => console.error("Error:", error));
+        }
+        function saveThreshold() {
+            let threshold = document.getElementById("threshold");
+            if (!threshold.value || threshold.value < 1 || threshold.value > 100) {
+                alert("Please enter a valid threshold (1-100)");
+                return;
+            }
+            let formData = new FormData();
+            formData.append("location", "{{ location_name }}");
+            formData.append("lat", "{{ lat }}");
+            formData.append("lon", "{{ lon }}");
+            formData.append("threshold", threshold.value);
+            fetch("/save_threshold", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => alert("Threshold saved successfully!"))
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>
+
+{% endblock %}
